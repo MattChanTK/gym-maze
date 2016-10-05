@@ -1,19 +1,24 @@
+import numpy as np
+
 import gym
 from gym import error, spaces, utils
 from gym.utils import seeding
-import numpy as np
-import os
 from gym_maze.envs.maze_view_2d import MazeView2D
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 class MazeEnv(gym.Env):
     metadata = {
-        "render.modes": ["human"],
+        "render.modes": ["human", "rgb_array"],
     }
 
     ACTION = ["N", "S", "E", "W"]
 
     def __init__(self):
+
+        self.viewer = None
 
         self.maze_view = MazeView2D(maze_name="OpenAI Gym - Maze",
                                     maze_file_path="maze2d_5x5.npy",
@@ -38,6 +43,9 @@ class MazeEnv(gym.Env):
 
         # Just need to initialize the relevant attributes
         self._configure()
+
+    def __del__(self):
+        self.maze_view.quit_game()
 
     def _configure(self, display=None):
         self.display = display
@@ -72,8 +80,13 @@ class MazeEnv(gym.Env):
         self.done = False
         return self.state
 
-    def _render(self, mode='human', close=False):
-        if close:
-            self.maze_view.quit_game()
+    def is_game_over(self):
+        return self.maze_view.game_over
 
-        return self.maze_view.update()
+    def _render(self, mode="human", close=False):
+
+        """ Viewer only supports human mode currently. """
+        if close:
+                self.maze_view.quit_game()
+
+        return self.maze_view.update(mode)

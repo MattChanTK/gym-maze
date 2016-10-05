@@ -54,22 +54,21 @@ class MazeView2D:
         # show the goals
         self.__draw_goal()
 
-    def update(self):
+    def update(self, mode="human"):
         try:
-            self.__view_update()
+            img_output = self.__view_update(mode)
             self.__controller_update()
         except Exception as e:
             self.__game_over = True
             self.quit_game()
             raise e
-        finally:
-            return self.__game_over
+        else:
+            return img_output
 
     def quit_game(self):
 
         try:
-            if self.game_over:
-                self.game_over = True
+            self.__game_over = True
             pygame.display.quit()
             pygame.quit()
         except Exception:
@@ -97,16 +96,21 @@ class MazeView2D:
                     self.__game_over = True
                     self.quit_game()
 
-    def __view_update(self):
+    def __view_update(self, mode="human"):
         if not self.__game_over:
             self.clock.tick(60)
             # update the robot's position
             self.__draw_robot()
             self.__draw_goal()
+
             # update the screen
             self.screen.blit(self.background, (0, 0))
             self.screen.blit(self.maze_layer,(0, 0))
-            pygame.display.flip()
+
+            if mode == "human":
+                pygame.display.flip()
+
+            return np.flipud(np.rot90(pygame.surfarray.array3d(pygame.display.get_surface())))
 
     def __draw_maze(self):
 
