@@ -6,7 +6,7 @@ import os
 
 class MazeView2D:
 
-    def __init__(self, maze_name="Maze2D", maze_file_path=None, screen_size=(640, 640)):
+    def __init__(self, maze_name="Maze2D", maze_file_path=None,  maze_size=(10, 10), screen_size=(640, 640)):
 
         # PyGame configurations
         pygame.init()
@@ -16,8 +16,7 @@ class MazeView2D:
 
         # Load a maze
         if maze_file_path is None:
-            dir_path = os.path.dirname(os.path.abspath(__file__))
-            maze_file_path = os.path.join(dir_path, "maze_samples", "maze2d_10x10.npy")
+            self.__maze = Maze(maze_size=maze_size)
         else:
             if not os.path.exists(maze_file_path):
                 dir_path = os.path.dirname(os.path.abspath(__file__))
@@ -26,16 +25,19 @@ class MazeView2D:
                     maze_file_path = rel_path
                 else:
                     raise FileExistsError("Cannot find %s." % maze_file_path)
+            self.__maze = Maze(maze_cells=Maze.load_maze(maze_file_path))
 
-        self.__maze = Maze(maze_cells=Maze.load_maze(maze_file_path))
         self.maze_size = self.__maze.maze_size
         self.screen = pygame.display.set_mode(screen_size)
 
-        # Create the Robot
-        self.__robot = np.zeros(2, dtype=int)
+        # Set the starting point
+        self.__entrance = np.zeros(2, dtype=int)
 
         # Set the Goal
         self.__goal = np.array(self.maze_size) - np.array((1, 1))
+
+        # Create the Robot
+        self.__robot = self.entrance
 
         # Create a background
         self.background = pygame.Surface(self.screen.get_size()).convert()
@@ -51,7 +53,10 @@ class MazeView2D:
         # show the robot
         self.__draw_robot()
 
-        # show the goals
+        # show the entrance
+        self.__draw_entrance()
+
+        # show the goal
         self.__draw_goal()
 
     def update(self, mode="human"):
@@ -66,7 +71,6 @@ class MazeView2D:
             return img_output
 
     def quit_game(self):
-
         try:
             self.__game_over = True
             pygame.display.quit()
@@ -76,7 +80,9 @@ class MazeView2D:
 
     def move_robot(self, dir):
         if dir not in self.__maze.COMPASS.keys():
-            raise ValueError("dir cannot be %s. The only valid dirs are %s." % (str(dir), str(self.__maze.COMPASS.keys())))
+            raise ValueError("dir cannot be %s. The only valid dirs are %s."
+                             % (str(dir), str(self.__maze.COMPASS.keys())))
+
         if self.__maze.is_open(self.__robot, dir):
             # update the drawing
             self.__draw_robot(transparency=0)
@@ -98,9 +104,9 @@ class MazeView2D:
 
     def __view_update(self, mode="human"):
         if not self.__game_over:
-            self.clock.tick(60)
             # update the robot's position
             self.__draw_robot()
+            self.__draw_entrance()
             self.__draw_goal()
 
             # update the screen
@@ -168,10 +174,21 @@ class MazeView2D:
 
         pygame.draw.circle(self.maze_layer, colour + (transparency,), (x, y), r)
 
-    def __draw_goal(self, colour=(150, 0, 0), transparency=155):
+    def __draw_entrance(self, colour=(0, 0, 150), transparency=130):
 
-        x = int(self.__goal[0] * self.CELL_W + 0.5 + 1)
-        y = int(self.__goal[1] * self.CELL_H + 0.5 + 1)
+        self.__colour_cell(self.entrance, colour=colour, transparency=transparency)
+
+    def __draw_goal(self, colour=(150, 0, 0), transparency=130):
+
+        self.__colour_cell(self.goal, colour=colour, transparency=transparency)
+
+    def __colour_cell(self, cell, colour, transparency):
+
+        if not (isinstance(cell, (list, tuple, np.ndarray)) and len(cell) == 2):
+            raise TypeError("cell must a be a tuple, list, or numpy array of size 2")
+
+        x = int(cell[0] * self.CELL_W + 0.5 + 1)
+        y = int(cell[1] * self.CELL_H + 0.5 + 1)
         w = int(self.CELL_W + 0.5 - 1)
         h = int(self.CELL_H + 0.5 - 1)
         pygame.draw.rect(self.maze_layer, colour + (transparency,), (x, y, w, h))
@@ -183,6 +200,10 @@ class MazeView2D:
     @property
     def robot(self):
         return self.__robot
+
+    @property
+    def entrance(self):
+        return self.__entrance
 
     @property
     def goal(self):
@@ -206,11 +227,11 @@ class MazeView2D:
 
     @property
     def CELL_W(self):
-        return self.SCREEN_W / self.maze.MAZE_W
+        return float(self.SCREEN_W) / float(self.maze.MAZE_W)
 
     @property
     def CELL_H(self):
-        return self.SCREEN_H / self.maze.MAZE_H
+        return float(self.SCREEN_H) / float(self.maze.MAZE_H)
 
 
 class Maze:
