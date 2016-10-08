@@ -6,7 +6,8 @@ import os
 
 class MazeView2D:
 
-    def __init__(self, maze_name="Maze2D", maze_file_path=None,  maze_size=(10, 10), screen_size=(640, 640)):
+    def __init__(self, maze_name="Maze2D", maze_file_path=None,
+                 maze_size=(10, 10), screen_size=(600, 600), has_loops=True):
 
         # PyGame configurations
         pygame.init()
@@ -16,7 +17,7 @@ class MazeView2D:
 
         # Load a maze
         if maze_file_path is None:
-            self.__maze = Maze(maze_size=maze_size)
+            self.__maze = Maze(maze_size=maze_size, has_loops=has_loops)
         else:
             if not os.path.exists(maze_file_path):
                 dir_path = os.path.dirname(os.path.abspath(__file__))
@@ -28,7 +29,9 @@ class MazeView2D:
             self.__maze = Maze(maze_cells=Maze.load_maze(maze_file_path))
 
         self.maze_size = self.__maze.maze_size
+        # to show the right and bottom border
         self.screen = pygame.display.set_mode(screen_size)
+        self.__screen_size = tuple(map(sum, zip(screen_size, (-1, -1))))
 
         # Set the starting point
         self.__entrance = np.zeros(2, dtype=int)
@@ -108,6 +111,7 @@ class MazeView2D:
             self.__draw_robot()
             self.__draw_entrance()
             self.__draw_goal()
+            #self.__draw_maze()
 
             # update the screen
             self.screen.blit(self.background, (0, 0))
@@ -120,13 +124,16 @@ class MazeView2D:
 
     def __draw_maze(self):
 
+        line_colour = (0, 0, 0, 255)
+
         # drawing the horizontal lines
-        for y in range(self.maze.MAZE_H):
-            pygame.draw.line(self.maze_layer, (0, 0, 0, 255), (0, y * self.CELL_H),
+        for y in range(self.maze.MAZE_H + 1):
+            pygame.draw.line(self.maze_layer, line_colour, (0, y * self.CELL_H),
                              (self.SCREEN_W, y * self.CELL_H))
+
         # drawing the vertical lines
-        for x in range(self.maze.MAZE_W):
-            pygame.draw.line(self.maze_layer, (0, 0, 0, 255), (x * self.CELL_W, 0),
+        for x in range(self.maze.MAZE_W + 1):
+            pygame.draw.line(self.maze_layer, line_colour, (x * self.CELL_W, 0),
                              (x * self.CELL_W, self.SCREEN_H))
 
         # breaking the walls
@@ -215,7 +222,7 @@ class MazeView2D:
 
     @property
     def SCREEN_SIZE(self):
-        return tuple(self.screen.get_size())
+        return tuple(self.__screen_size)
 
     @property
     def SCREEN_W(self):
@@ -243,10 +250,11 @@ class Maze:
         "W": (-1, 0)
     }
 
-    def __init__(self, maze_cells=None, maze_size=(10,10)):
+    def __init__(self, maze_cells=None, maze_size=(10,10), has_loops=True):
 
         # maze member variables
         self.maze_cells = maze_cells
+        self.has_loops = has_loops
 
         # Use existing one if exists
         if self.maze_cells is not None:
@@ -312,6 +320,7 @@ class Maze:
                 if 0 <= x1 < self.MAZE_W and 0 <= y1 < self.MAZE_H:
                     # if all four walls still exist
                     if self.all_walls_intact(self.maze_cells[x1, y1]):
+                    #if self.num_walls_broken(self.maze_cells[x1, y1]) <= 1:
                         neighbours[dir_key] = (x1, y1)
 
             # if there is a neighbour
@@ -332,18 +341,50 @@ class Maze:
                 # increment the visited cell count
                 num_cells_visited += 1
 
-    def is_open(self, cell, dir):
+        if self.has_loops:
+            self.__break_random_walls(0.2)
+
+    def __break_random_walls(self, percent):
+        # find some random cells to break
+        num_cells = int(round(self.MAZE_H*self.MAZE_W*percent))
+        cell_ids = random.sample(range(self.MAZE_W*self.MAZE_H), num_cells)
+
+        # for each of those walls
+        for cell_id in cell_ids:
+            x = cell_id % self.MAZE_H
+            y = int(cell_id/self.MAZE_H)
+
+            # randomize the compass order
+            dirs = random.sample(list(self.COMPASS.keys()), len(self.COMPASS))
+            for dir in dirs:
+                # break the wall if it's not already open
+                if self.is_breakable((x, y), dir):
+                    self.maze_cells[x, y] = self.__break_walls(self.maze_cells[x, y], dir)
+                    break
+
+    def is_open(self, cell_id, dir):
         # check if it would be out-of-bound
-        x1 = cell[0] + self.COMPASS[dir][0]
-        y1 = cell[1] + self.COMPASS[dir][1]
+        x1 = cell_id[0] + self.COMPASS[dir][0]
+        y1 = cell_id[1] + self.COMPASS[dir][1]
 
         # if cell is still within bounds after the move
-        if 0 <= x1 < self.MAZE_W and 0 <= y1 < self.MAZE_H:
+        if self.is_within_bound(x1, y1):
             # check if the wall is opened
-            this_wall = bool(self.get_walls_status(self.maze_cells[cell[0], cell[1]])[dir])
+            this_wall = bool(self.get_walls_status(self.maze_cells[cell_id[0], cell_id[1]])[dir])
             other_wall = bool(self.get_walls_status(self.maze_cells[x1, y1])[self.__get_opposite_wall(dir)])
             return this_wall or other_wall
         return False
+
+    def is_breakable(self, cell_id, dir):
+        # check if it would be out-of-bound
+        x1 = cell_id[0] + self.COMPASS[dir][0]
+        y1 = cell_id[1] + self.COMPASS[dir][1]
+
+        return not self.is_open(cell_id, dir) and self.is_within_bound(x1, y1)
+
+    def is_within_bound(self, x, y):
+        # true if cell is still within bounds after the move
+        return 0 <= x < self.MAZE_W and 0 <= y < self.MAZE_H
 
     @property
     def MAZE_W(self):
@@ -366,6 +407,14 @@ class Maze:
     @classmethod
     def all_walls_intact(cls, cell):
         return cell & 0xF == 0
+
+    @classmethod
+    def num_walls_broken(cls, cell):
+        walls = cls.get_walls_status(cell)
+        num_broken = 0
+        for wall_broken in walls.values():
+            num_broken += wall_broken
+        return num_broken
 
     @classmethod
     def __break_walls(cls, cell, dirs):
@@ -402,3 +451,12 @@ class Maze:
             opposite_dirs += opposite_dir
 
         return opposite_dirs
+
+
+if __name__ == "__main__":
+
+    maze = MazeView2D(screen_size= (500, 500), maze_size=(10,10))
+    maze.update()
+    input("Enter any key to quit.")
+
+
