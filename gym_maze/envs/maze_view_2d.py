@@ -7,7 +7,8 @@ import os
 class MazeView2D:
 
     def __init__(self, maze_name="Maze2D", maze_file_path=None,
-                 maze_size=(10, 10), screen_size=(600, 600), has_loops=True):
+                 maze_size=(30, 30), screen_size=(600, 600),
+                 has_loops=False, num_portals=0):
 
         # PyGame configurations
         pygame.init()
@@ -17,7 +18,7 @@ class MazeView2D:
 
         # Load a maze
         if maze_file_path is None:
-            self.__maze = Maze(maze_size=maze_size, has_loops=has_loops)
+            self.__maze = Maze(maze_size=maze_size, has_loops=has_loops, num_portals=num_portals)
         else:
             if not os.path.exists(maze_file_path):
                 dir_path = os.path.dirname(os.path.abspath(__file__))
@@ -53,6 +54,9 @@ class MazeView2D:
         # show the maze
         self.__draw_maze()
 
+        # show the portals
+        self.__draw_portals()
+
         # show the robot
         self.__draw_robot()
 
@@ -87,9 +91,15 @@ class MazeView2D:
                              % (str(dir), str(self.__maze.COMPASS.keys())))
 
         if self.__maze.is_open(self.__robot, dir):
+
             # update the drawing
             self.__draw_robot(transparency=0)
+
+            # move the robot
             self.__robot += np.array(self.__maze.COMPASS[dir])
+            # if it's in a portal afterward
+            if self.maze.is_portal(self.robot):
+                self.__robot = np.array(self.maze.get_portal(tuple(self.robot)).teleport(tuple(self.robot)))
             self.__draw_robot(transparency=255)
 
     def reset_robot(self):
@@ -108,10 +118,11 @@ class MazeView2D:
     def __view_update(self, mode="human"):
         if not self.__game_over:
             # update the robot's position
-            self.__draw_robot()
             self.__draw_entrance()
             self.__draw_goal()
-            #self.__draw_maze()
+            self.__draw_portals()
+            self.__draw_robot()
+
 
             # update the screen
             self.screen.blit(self.background, (0, 0))
@@ -181,13 +192,23 @@ class MazeView2D:
 
         pygame.draw.circle(self.maze_layer, colour + (transparency,), (x, y), r)
 
-    def __draw_entrance(self, colour=(0, 0, 150), transparency=130):
+    def __draw_entrance(self, colour=(0, 0, 150), transparency=235):
 
         self.__colour_cell(self.entrance, colour=colour, transparency=transparency)
 
-    def __draw_goal(self, colour=(150, 0, 0), transparency=130):
+    def __draw_goal(self, colour=(150, 0, 0), transparency=235):
 
         self.__colour_cell(self.goal, colour=colour, transparency=transparency)
+
+    def __draw_portals(self, transparency=160):
+
+        colour_range = np.linspace(0, 255, len(self.maze.portals), dtype=int)
+        colour_i = 0
+        for portal in self.maze.portals:
+            colour = ((100 - colour_range[colour_i])% 255, colour_range[colour_i], 0)
+            colour_i += 1
+            for location in portal.locations:
+                self.__colour_cell(location, colour=colour, transparency=transparency)
 
     def __colour_cell(self, cell, colour, transparency):
 
@@ -250,11 +271,14 @@ class Maze:
         "W": (-1, 0)
     }
 
-    def __init__(self, maze_cells=None, maze_size=(10,10), has_loops=True):
+    def __init__(self, maze_cells=None, maze_size=(10,10), has_loops=True, num_portals=0):
 
         # maze member variables
         self.maze_cells = maze_cells
         self.has_loops = has_loops
+        self.__portals_dict = dict()
+        self.__portals = []
+        self.num_portals = num_portals
 
         # Use existing one if exists
         if self.maze_cells is not None:
@@ -344,6 +368,9 @@ class Maze:
         if self.has_loops:
             self.__break_random_walls(0.2)
 
+        if self.num_portals > 0:
+            self.__set_random_portals(num_portal_sets=self.num_portals, set_size=2)
+
     def __break_random_walls(self, percent):
         # find some random cells to break
         num_cells = int(round(self.MAZE_H*self.MAZE_W*percent))
@@ -361,6 +388,37 @@ class Maze:
                 if self.is_breakable((x, y), dir):
                     self.maze_cells[x, y] = self.__break_walls(self.maze_cells[x, y], dir)
                     break
+
+    def __set_random_portals(self, num_portal_sets, set_size=2):
+        # find some random cells to break
+        num_portal_sets = int(num_portal_sets)
+        set_size = int(set_size)
+
+        # limit the maximum number of portal sets to the number of cells available.
+        max_portal_sets = int(self.MAZE_W * self.MAZE_H / set_size)
+        num_portal_sets = min(max_portal_sets, num_portal_sets)
+
+        # the first and last cells are reserved
+        cell_ids = random.sample(range(1, self.MAZE_W * self.MAZE_H - 1), num_portal_sets*set_size)
+
+        for i in range(num_portal_sets):
+            # sample the set_size number of sell
+            portal_cell_ids = random.sample(cell_ids, set_size)
+            portal_locations = []
+            for portal_cell_id in portal_cell_ids:
+                # remove the cell from the set of potential cell_ids
+                cell_ids.pop(cell_ids.index(portal_cell_id))
+                # convert portal ids to location
+                x = portal_cell_id % self.MAZE_H
+                y = int(portal_cell_id / self.MAZE_H)
+                portal_locations.append((x,y))
+            # append the new portal to the maze
+            portal = Portal(*portal_locations)
+            self.__portals.append(portal)
+
+            # create a dictionary of portals
+            for portal_location in portal_locations:
+                self.__portals_dict[portal_location] = portal
 
     def is_open(self, cell_id, dir):
         # check if it would be out-of-bound
@@ -385,6 +443,18 @@ class Maze:
     def is_within_bound(self, x, y):
         # true if cell is still within bounds after the move
         return 0 <= x < self.MAZE_W and 0 <= y < self.MAZE_H
+
+    def is_portal(self, cell):
+        return tuple(cell) in self.__portals_dict
+
+    @property
+    def portals(self):
+        return tuple(self.__portals)
+
+    def get_portal(self, cell):
+        if cell in self.__portals_dict:
+            return self.__portals_dict[cell]
+        return None
 
     @property
     def MAZE_W(self):
@@ -451,6 +521,29 @@ class Maze:
             opposite_dirs += opposite_dir
 
         return opposite_dirs
+
+class Portal:
+
+    def __init__(self, *locations):
+
+        self.__locations = []
+        for location in locations:
+            if isinstance(location, (tuple, list)):
+                self.__locations.append(tuple(location))
+            else:
+                raise ValueError("location must be a list or a tuple.")
+
+    def teleport(self, cell):
+        if cell in self.locations:
+            return self.locations[(self.locations.index(cell) + 1) % len(self.locations)]
+        return cell
+
+    def get_index(self, cell):
+        return self.locations.index(cell)
+
+    @property
+    def locations(self):
+        return self.__locations
 
 
 if __name__ == "__main__":

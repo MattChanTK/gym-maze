@@ -59,3 +59,24 @@ register(
     timestep_limit=1000000,
     nondeterministic=True,
 )
+
+register(
+    id='maze-random-10x10-plus-v0',
+    entry_point='gym_maze.envs:MazeEnvRandom10x10Plus',
+    timestep_limit=1000000,
+    nondeterministic=True,
+)
+
+register(
+    id='maze-random-20x20-plus-v0',
+    entry_point='gym_maze.envs:MazeEnvRandom20x20Plus',
+    timestep_limit=1000000,
+    nondeterministic=True,
+)
+
+register(
+    id='maze-random-30x30-plus-v0',
+    entry_point='gym_maze.envs:MazeEnvRandom30x30Plus',
+    timestep_limit=1000000,
+    nondeterministic=True,
+)

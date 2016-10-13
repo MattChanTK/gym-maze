@@ -13,7 +13,7 @@ class MazeEnv(gym.Env):
 
     ACTION = ["N", "S", "E", "W"]
 
-    def __init__(self, maze_file=None, maze_size=None):
+    def __init__(self, maze_file=None, maze_size=None, mode=None):
 
         self.viewer = None
 
@@ -22,9 +22,16 @@ class MazeEnv(gym.Env):
                                         maze_file_path=maze_file,
                                         screen_size=(640, 640))
         elif maze_size:
+            if mode == "plus":
+                has_loops = True
+                num_portals = int(round(min(maze_size)/3))
+            else:
+                has_loops = False
+                num_portals = 0
+
             self.maze_view = MazeView2D(maze_name="OpenAI Gym - Maze (%d x %d)" % maze_size,
-                                        maze_size=maze_size,
-                                        screen_size=(640, 640))
+                                        maze_size=maze_size, screen_size=(640, 640),
+                                        has_loops=has_loops, num_portals=num_portals)
         else:
             raise AttributeError("One must supply either a maze_file path (str) or the maze_size (tuple of length 2)")
 
@@ -142,3 +149,19 @@ class MazeEnvRandom100x100(MazeEnv):
     def __init__(self):
         super(MazeEnvRandom100x100, self).__init__(maze_size=(100, 100))
 
+
+class MazeEnvRandom10x10Plus(MazeEnv):
+
+    def __init__(self):
+        super(MazeEnvRandom10x10Plus, self).__init__(maze_size=(10, 10), mode="plus")
+
+
+class MazeEnvRandom20x20Plus(MazeEnv):
+
+    def __init__(self):
+        super(MazeEnvRandom20x20Plus, self).__init__(maze_size=(20, 20), mode="plus")
+
+
+class MazeEnvRandom30x30Plus(MazeEnv):
+    def __init__(self):
+        super(MazeEnvRandom30x30Plus, self).__init__(maze_size=(30, 30), mode="plus")
