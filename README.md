@@ -3,6 +3,8 @@
 A simple 2D maze environment where an agent (blue dot) finds its way from the top left corner (blue square) to the goal at the bottom right corner (red square). 
 The objective is to find the shortest path from the start to the goal.
 
+![Simple 2D maze environment](http://i.giphy.com/Ar3aKxkAAh3y0.gif)
+
 ### Action space
 The agent may only choose to go up, down, left, or right ("N", "S", "W", "E"). If the way is blocked, it will remain at the same the location. 
 
@@ -43,3 +45,8 @@ It should work on both Python 2.7+ and 3.4+. It requires pygame and numpy.
 cd gym-maze
 python setup.py install
 ```
+# Examples
+An example of finding the shortest path through the maze using Q-learning can be found here: https://github.com/tuzzer/ai-gym/blob/master/maze_2d/maze_2d_q_learning.py
+
+![Solving 20x20 maze with loops and portals using Q-Learning](http://i.giphy.com/rfazKQngdaja8.gif)
+
