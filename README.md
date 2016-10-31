@@ -38,14 +38,14 @@ The agent can also teleport from a portal to another portal of the same colour.
 * 20 cells x 20 cells: _MazeEnvRandom20x20Plus_
 * 30 cells x 30 cells: _MazeEnvRandom30x30Plus_
 
-# Installation
+## Installation
 It should work on both Python 2.7+ and 3.4+. It requires pygame and numpy. 
 
 ```bash
 cd gym-maze
 python setup.py install
 ```
-# Examples
+## Examples
 An example of finding the shortest path through the maze using Q-learning can be found here: https://github.com/tuzzer/ai-gym/blob/master/maze_2d/maze_2d_q_learning.py
 
 ![Solving 20x20 maze with loops and portals using Q-Learning](http://i.giphy.com/rfazKQngdaja8.gif)
