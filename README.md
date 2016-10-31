@@ -3,7 +3,7 @@
 A simple 2D maze environment where an agent (blue dot) finds its way from the top left corner (blue square) to the goal at the bottom right corner (red square). 
 The objective is to find the shortest path from the start to the goal.
 
-![Simple 2D maze environment](http://i.giphy.com/Ar3aKxkAAh3y0.gif)
+<kbd>![Simple 2D maze environment](http://i.giphy.com/Ar3aKxkAAh3y0.gif)</kbd>
 
 ### Action space
 The agent may only choose to go up, down, left, or right ("N", "S", "W", "E"). If the way is blocked, it will remain at the same the location. 
