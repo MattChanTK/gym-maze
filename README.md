@@ -4,13 +4,13 @@ A simple 2D maze environment where an agent (blue dot) finds its way from the to
 The objective is to find the shortest path from the start to the goal.
 
 ### Action space
-The agent may only choose to go up, down, left, or right. If the way is blocked, it will remain at the same the location. 
+The agent may only choose to go up, down, left, or right ("N", "S", "W", "E"). If the way is blocked, it will remain at the same the location. 
 
 ### Observation space
-The observation space is the (x, y) coordinate of the agent. The top left cell is (0, 0). 
+The observation space is the (x, y) coordinate of the agent. The top left cell is (0, 0).
 
 ### Reward
-A reward of 1 is given when the agent reaches the goal. For every step in the maze, the agent recieves a reward of -0.1/(number of cells).i
+A reward of 1 is given when the agent reaches the goal. For every step in the maze, the agent recieves a reward of -0.1/(number of cells).
 
 ### End condition
 The maze is reset when the agent reaches the goal. 
@@ -37,6 +37,7 @@ The agent can also teleport from a portal to another portal of the same colour.
 * 30 cells x 30 cells: _MazeEnvRandom30x30Plus_
 
 # Installation
+It should work on both Python 2.7+ and 3.4+. It requires pygame and numpy. 
 
 ```bash
 cd gym-maze
