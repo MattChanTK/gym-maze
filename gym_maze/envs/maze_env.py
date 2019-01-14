@@ -43,30 +43,30 @@ class MazeEnv(gym.Env):
         # observation is the x, y coordinate of the grid
         low = np.zeros(len(self.maze_size), dtype=int)
         high =  np.array(self.maze_size, dtype=int) - np.ones(len(self.maze_size), dtype=int)
-        self.observation_space = spaces.Box(low, high)
+        self.observation_space = spaces.Box(low, high, dtype=np.int64)
 
         # initial condition
         self.state = None
         self.steps_beyond_done = None
 
         # Simulation related variables.
-        self._seed()
-        self._reset()
+        self.seed()
+        self.reset()
 
         # Just need to initialize the relevant attributes
-        self._configure()
+        self.configure()
 
     def __del__(self):
         self.maze_view.quit_game()
 
-    def _configure(self, display=None):
+    def configure(self, display=None):
         self.display = display
 
-    def _seed(self, seed=None):
+    def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-    def _step(self, action):
+    def step(self, action):
         if isinstance(action, int):
             self.maze_view.move_robot(self.ACTION[action])
         else:
@@ -85,7 +85,7 @@ class MazeEnv(gym.Env):
 
         return self.state, reward, done, info
 
-    def _reset(self):
+    def reset(self):
         self.maze_view.reset_robot()
         self.state = np.zeros(2)
         self.steps_beyond_done = None
@@ -95,7 +95,7 @@ class MazeEnv(gym.Env):
     def is_game_over(self):
         return self.maze_view.game_over
 
-    def _render(self, mode="human", close=False):
+    def render(self, mode="human", close=False):
         if close:
             self.maze_view.quit_game()
 
