@@ -51,7 +51,7 @@ class MazeEnv(gym.Env):
 
         # Simulation related variables.
         self._seed()
-        self.reset()
+        self._reset()
 
         # Just need to initialize the relevant attributes
         self._configure()
