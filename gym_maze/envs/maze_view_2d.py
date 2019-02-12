@@ -8,13 +8,14 @@ class MazeView2D:
 
     def __init__(self, maze_name="Maze2D", maze_file_path=None,
                  maze_size=(30, 30), screen_size=(600, 600),
-                 has_loops=False, num_portals=0):
+                 has_loops=False, num_portals=0, enable_render=True):
 
         # PyGame configurations
         pygame.init()
         pygame.display.set_caption(maze_name)
         self.clock = pygame.time.Clock()
         self.__game_over = False
+        self.__enable_render = enable_render
 
         # Load a maze
         if maze_file_path is None:
@@ -30,9 +31,10 @@ class MazeView2D:
             self.__maze = Maze(maze_cells=Maze.load_maze(maze_file_path))
 
         self.maze_size = self.__maze.maze_size
-        # to show the right and bottom border
-        self.screen = pygame.display.set_mode(screen_size)
-        self.__screen_size = tuple(map(sum, zip(screen_size, (-1, -1))))
+        if self.__enable_render is True:
+            # to show the right and bottom border
+            self.screen = pygame.display.set_mode(screen_size)
+            self.__screen_size = tuple(map(sum, zip(screen_size, (-1, -1))))
 
         # Set the starting point
         self.__entrance = np.zeros(2, dtype=int)
@@ -80,7 +82,8 @@ class MazeView2D:
     def quit_game(self):
         try:
             self.__game_over = True
-            pygame.display.quit()
+            if self.__enable_render is True:
+                pygame.display.quit()
             pygame.quit()
         except Exception:
             pass
@@ -134,7 +137,10 @@ class MazeView2D:
             return np.flipud(np.rot90(pygame.surfarray.array3d(pygame.display.get_surface())))
 
     def __draw_maze(self):
-
+        
+        if self.__enable_render is False:
+            return
+        
         line_colour = (0, 0, 0, 255)
 
         # drawing the horizontal lines
@@ -160,6 +166,9 @@ class MazeView2D:
 
     def __cover_walls(self, x, y, dirs, colour=(0, 0, 255, 15)):
 
+        if self.__enable_render is False:
+            return
+        
         dx = x * self.CELL_W
         dy = y * self.CELL_H
 
@@ -186,6 +195,9 @@ class MazeView2D:
 
     def __draw_robot(self, colour=(0, 0, 150), transparency=255):
 
+        if self.__enable_render is False:
+            return
+        
         x = int(self.__robot[0] * self.CELL_W + self.CELL_W * 0.5 + 0.5)
         y = int(self.__robot[1] * self.CELL_H + self.CELL_H * 0.5 + 0.5)
         r = int(min(self.CELL_W, self.CELL_H)/5 + 0.5)
@@ -202,6 +214,9 @@ class MazeView2D:
 
     def __draw_portals(self, transparency=160):
 
+        if self.__enable_render is False:
+            return
+        
         colour_range = np.linspace(0, 255, len(self.maze.portals), dtype=int)
         colour_i = 0
         for portal in self.maze.portals:
@@ -211,6 +226,9 @@ class MazeView2D:
                 self.__colour_cell(location, colour=colour, transparency=transparency)
 
     def __colour_cell(self, cell, colour, transparency):
+
+        if self.__enable_render is False:
+            return
 
         if not (isinstance(cell, (list, tuple, np.ndarray)) and len(cell) == 2):
             raise TypeError("cell must a be a tuple, list, or numpy array of size 2")

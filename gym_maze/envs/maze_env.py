@@ -13,14 +13,16 @@ class MazeEnv(gym.Env):
 
     ACTION = ["N", "S", "E", "W"]
 
-    def __init__(self, maze_file=None, maze_size=None, mode=None):
+    def __init__(self, maze_file=None, maze_size=None, mode=None, enable_render=True):
 
         self.viewer = None
+        self.enable_render = enable_render
 
         if maze_file:
             self.maze_view = MazeView2D(maze_name="OpenAI Gym - Maze (%s)" % maze_file,
                                         maze_file_path=maze_file,
-                                        screen_size=(640, 640))
+                                        screen_size=(640, 640), 
+                                        enable_render=enable_render)
         elif maze_size:
             if mode == "plus":
                 has_loops = True
