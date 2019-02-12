@@ -33,7 +33,8 @@ class MazeEnv(gym.Env):
 
             self.maze_view = MazeView2D(maze_name="OpenAI Gym - Maze (%d x %d)" % maze_size,
                                         maze_size=maze_size, screen_size=(640, 640),
-                                        has_loops=has_loops, num_portals=num_portals)
+                                        has_loops=has_loops, num_portals=num_portals,
+                                        enable_render=enable_render)
         else:
             raise AttributeError("One must supply either a maze_file path (str) or the maze_size (tuple of length 2)")
 

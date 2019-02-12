@@ -45,28 +45,29 @@ class MazeView2D:
         # Create the Robot
         self.__robot = self.entrance
 
-        # Create a background
-        self.background = pygame.Surface(self.screen.get_size()).convert()
-        self.background.fill((255, 255, 255))
+        if self.__enable_render is True:
+            # Create a background
+            self.background = pygame.Surface(self.screen.get_size()).convert()
+            self.background.fill((255, 255, 255))
 
-        # Create a layer for the maze
-        self.maze_layer = pygame.Surface(self.screen.get_size()).convert_alpha()
-        self.maze_layer.fill((0, 0, 0, 0,))
+            # Create a layer for the maze
+            self.maze_layer = pygame.Surface(self.screen.get_size()).convert_alpha()
+            self.maze_layer.fill((0, 0, 0, 0,))
 
-        # show the maze
-        self.__draw_maze()
+            # show the maze
+            self.__draw_maze()
 
-        # show the portals
-        self.__draw_portals()
+            # show the portals
+            self.__draw_portals()
 
-        # show the robot
-        self.__draw_robot()
+            # show the robot
+            self.__draw_robot()
 
-        # show the entrance
-        self.__draw_entrance()
+            # show the entrance
+            self.__draw_entrance()
 
-        # show the goal
-        self.__draw_goal()
+            # show the goal
+            self.__draw_goal()
 
     def update(self, mode="human"):
         try:
