@@ -154,6 +154,11 @@ class MazeEnvRandom100x100(MazeEnv):
         super(MazeEnvRandom100x100, self).__init__(maze_size=(100, 100), enable_render=enable_render)
 
 
+class MazeEnvRandomCustom(MazeEnv):
+    def __init__(self, maze_size, enable_render=True):
+        super(MazeEnvRandomCustom, self).__init__(maze_size=maze_size, enable_render=enable_render)
+
+
 class MazeEnvRandom10x10Plus(MazeEnv):
 
     def __init__(self, enable_render=True):
