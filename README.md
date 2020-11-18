@@ -6,7 +6,7 @@ The objective is to find the shortest path from the start to the goal.
 <kbd>![Simple 2D maze environment](http://i.giphy.com/Ar3aKxkAAh3y0.gif)</kbd>
 
 ### Action space
-The agent may only choose to go up, down, left, or right ("N", "S", "W", "E"). If the way is blocked, it will remain at the same the location. 
+The agent may only choose to go up, down, left, or right ("N", "S", "E", "W"). If the way is blocked, it will remain at the same the location. 
 
 ### Observation space
 The observation space is the (x, y) coordinate of the agent. The top left cell is (0, 0).
@@ -30,6 +30,7 @@ The maze is reset when the agent reaches the goal.
 * 5 cells x 5 cells: _MazeEnvRandom5x5_
 * 10 cells x 10 cells: _MazeEnvRandom10x10_
 * 100 cells x 100 cells: _MazeEnvRandom100x100_
+* custom cells x custom cells: _MazeEnvRandomCustom_
 
 ### Randomly generated mazes with portals and loops
 With loops, it means that there will be more than one possible path.

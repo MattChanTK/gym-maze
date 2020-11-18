@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name="gym_maze",
-      version="0.5",
+      version="0.6",
       url="https://github.com/Kuzat/gym-maze",
       author="Matthew T.K. Chan",
       license="MIT",

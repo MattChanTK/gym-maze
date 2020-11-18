@@ -111,6 +111,11 @@ class MazeView2D:
         self.__draw_robot(transparency=0)
         self.__robot = np.zeros(2, dtype=int)
         self.__draw_robot(transparency=255)
+        
+    def restore_robot(self, state):
+        self.__draw_robot(transparency=0)
+        self.__robot = state
+        self.__draw_robot(transparency=255)
 
     def __controller_update(self):
         if not self.__game_over:

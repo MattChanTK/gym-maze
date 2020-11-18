@@ -104,7 +104,14 @@ class MazeEnv(gym.Env):
             self.maze_view.quit_game()
 
         return self.maze_view.update(mode)
-
+ 
+    def restore(self, state):
+        self.maze_view.restore_robot(state)
+        self.state = state
+        self.steps_beyond_done = None
+        self.done = False
+        return self.state
+   
 
 class MazeEnvSample5x5(MazeEnv):
 
