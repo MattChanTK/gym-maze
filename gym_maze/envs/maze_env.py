@@ -13,10 +13,11 @@ class MazeEnv(gym.Env):
 
     ACTION = ["N", "S", "E", "W"]
 
-    def __init__(self, maze_file=None, maze_size=None, mode=None, enable_render=True):
+    def __init__(self, maze_file=None, maze_size=None, mode=None, enable_render=True, zero_step_rewards=False):
 
         self.viewer = None
         self.enable_render = enable_render
+        self.zero_step_rewards = zero_step_rewards
 
         if maze_file:
             self.maze_view = MazeView2D(maze_name="OpenAI Gym - Maze (%s)" % maze_file,
@@ -80,7 +81,10 @@ class MazeEnv(gym.Env):
             reward = 1
             done = True
         else:
-            reward = -0.1/(self.maze_size[0]*self.maze_size[1])
+            if self.zero_step_rewards:
+                reward = 0
+            else:
+                reward = -0.1/(self.maze_size[0]*self.maze_size[1])
             done = False
 
         self.state = self.maze_view.robot
@@ -162,8 +166,8 @@ class MazeEnvRandom100x100(MazeEnv):
 
 
 class MazeEnvRandomCustom(MazeEnv):
-    def __init__(self, maze_size, enable_render=True):
-        super(MazeEnvRandomCustom, self).__init__(maze_size=maze_size, enable_render=enable_render)
+    def __init__(self, maze_size, enable_render=True, zero_step_rewards=False):
+        super(MazeEnvRandomCustom, self).__init__(maze_size=maze_size, enable_render=enable_render, zero_step_rewards=zero_step_rewards)
 
 
 class MazeEnvRandom10x10Plus(MazeEnv):
