@@ -13,10 +13,11 @@ class MazeEnv(gym.Env):
 
     ACTION = ["N", "S", "E", "W"]
 
-    def __init__(self, maze_file=None, maze_size=None, mode=None, enable_render=True):
+    def __init__(self, maze_file=None, maze_size=None, mode=None, enable_render=True, zero_step_rewards=False):
 
         self.viewer = None
         self.enable_render = enable_render
+        self.zero_step_rewards = zero_step_rewards
 
         if maze_file:
             self.maze_view = MazeView2D(maze_name="OpenAI Gym - Maze (%s)" % maze_file,
@@ -80,7 +81,10 @@ class MazeEnv(gym.Env):
             reward = 1
             done = True
         else:
-            reward = -0.1/(self.maze_size[0]*self.maze_size[1])
+            if self.zero_step_rewards:
+                reward = 0
+            else:
+                reward = -0.1/(self.maze_size[0]*self.maze_size[1])
             done = False
 
         self.state = self.maze_view.robot
@@ -91,7 +95,7 @@ class MazeEnv(gym.Env):
 
     def reset(self):
         self.maze_view.reset_robot()
-        self.state = np.zeros(2)
+        self.state = np.zeros(2, dtype=int)
         self.steps_beyond_done = None
         self.done = False
         return self.state
@@ -104,7 +108,14 @@ class MazeEnv(gym.Env):
             self.maze_view.quit_game()
 
         return self.maze_view.update(mode)
-
+ 
+    def restore(self, state):
+        self.maze_view.restore_robot(state)
+        self.state = state
+        self.steps_beyond_done = None
+        self.done = False
+        return self.state
+   
 
 class MazeEnvSample5x5(MazeEnv):
 
@@ -152,6 +163,11 @@ class MazeEnvRandom100x100(MazeEnv):
 
     def __init__(self, enable_render=True):
         super(MazeEnvRandom100x100, self).__init__(maze_size=(100, 100), enable_render=enable_render)
+
+
+class MazeEnvRandomCustom(MazeEnv):
+    def __init__(self, maze_size, enable_render=True, zero_step_rewards=False):
+        super(MazeEnvRandomCustom, self).__init__(maze_size=maze_size, enable_render=enable_render, zero_step_rewards=zero_step_rewards)
 
 
 class MazeEnvRandom10x10Plus(MazeEnv):
