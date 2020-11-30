@@ -6,7 +6,7 @@ The objective is to find the shortest path from the start to the goal.
 <kbd>![Simple 2D maze environment](http://i.giphy.com/Ar3aKxkAAh3y0.gif)</kbd>
 
 ### Action space
-The agent may only choose to go up, down, left, or right ("N", "S", "W", "E"). If the way is blocked, it will remain at the same the location. 
+The agent may only choose to go up, down, right, or left ("N", "S", "E", "W"). If the way is blocked, it will remain at the same the location. 
 
 ### Observation space
 The observation space is the (x, y) coordinate of the agent. The top left cell is (0, 0).
