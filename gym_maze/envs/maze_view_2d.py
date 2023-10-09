@@ -129,8 +129,9 @@ class MazeView2D:
 
 
             # update the screen
-            self.screen.blit(self.background, (0, 0))
-            self.screen.blit(self.maze_layer,(0, 0))
+            if self.enable_render:
+                self.screen.blit(self.background, (0, 0))
+                self.screen.blit(self.maze_layer,(0, 0))
 
             if mode == "human":
                 pygame.display.flip()
