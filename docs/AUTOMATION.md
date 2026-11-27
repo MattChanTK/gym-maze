@@ -9,7 +9,7 @@ Matthew approved these rules on 2026-11-27. They are his standing OK for the mer
 3. **Own PRs.** Each open `bot/*` PR: merge master in, fix conflicts (CHANGELOG and newest-first docs: keep both entries), re-run checks, merge if it passes the gate.
 4. **PRs from others.** Read the whole diff before running any of it. Never merge an outside PR directly. Good change: rebuild on a `bot/` branch with `Co-authored-by` credit, link it, comment on the outside PR, leave it open for Matthew. Spam, IDE files, unrelated scripts: label `needs-approval`, don't close.
 5. **New issues.** Reproduce. Clear bug, small fix: `bot/fix-<n>` PR with a test that failed before, `Fixes #n`. Question: answer it, leave open. Feature, design call, unclear: label `needs-approval`, comment what's needed.
-6. **Report.** Pinned issue "Bot daily log" (create once): one dated line per run: merged, opened, waiting on Matthew. Quiet day = one line.
+6. **Report.** Nothing new since last run (no new issues, PRs, comments, kit tag, red master): change nothing, write no log, end quietly. Something happened: add one dated line to the pinned issue "Bot daily log" (create it the first time): merged, opened, waiting on Matthew.
 
 ## Auto-merge gate (all must hold)
 - Kind: kit tag update, bug fix with a new test, docs, test-only, CI/tooling fix in repo files.
