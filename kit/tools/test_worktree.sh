@@ -1,8 +1,6 @@
 #!/bin/bash
 # Behavior of tools/worktree.sh: create, list, remove, prune; idempotent; keeps dirty or unmerged trees.
 set -euo pipefail
-# The test repo uses main; ignore a project kit.env value inherited from check.sh.
-unset KIT_MAIN_BRANCH
 root=$(cd "$(dirname "$0")/.." && pwd)
 wt="$root/tools/worktree.sh"
 fails=0
