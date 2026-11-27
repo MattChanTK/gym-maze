@@ -2,6 +2,9 @@
 
 Newest first. Each entry: date, what was built, decisions, lessons, commit hashes. Older entries: `docs/changelog/`.
 
+## 2026-11-27 kit v0.3.1
+- kit/ updated v0.2.1 -> v0.3.1 (a004a2d): qa.sh, QA dashboard, layout_rules, iOS layout/release tools, shared lanes; template drops docs/company. check.sh pass (13 tests).
+
 ## 2026-11-27 Remove docs/company
 - Deleted docs/company/ (MINUTES.md, STRUCTURE.md) and the MINUTES line in CLAUDE.md: not needed (Matthew). Decisions live in this changelog. Same change in dev-kit PR #4 (v0.3.1).
 
