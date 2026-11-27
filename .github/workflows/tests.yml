@@ -1,0 +1,22 @@
+# Fast checks on every PR and push to main: kit/tools/check.sh (kit tests + KIT_CHECKS in kit.env).
+# Make `tests` a required check on master.
+name: tests
+on:
+  pull_request:
+  push:
+    branches: [master]
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install 'gym<0.26' pygame 'numpy<2'
+      - run: git config --global user.email ci@example.com && git config --global user.name ci
+      - run: python3 kit/tools/scan_secrets.py --all
+      - run: touch CLAUDE.local.md && kit/tools/check.sh
