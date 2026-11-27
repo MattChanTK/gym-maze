@@ -24,6 +24,7 @@ run "Kit:    " "${clean_env[@]}" python3 -I $KIT_DIR/tools/test_roll_changelog.p
 run "Kit:    " "${clean_env[@]}" $KIT_DIR/tools/test_worktree.sh
 run "Kit:    " "${clean_env[@]}" $KIT_DIR/tools/test_lane.sh
 run "Kit:    " "${clean_env[@]}" $KIT_DIR/tools/test_qa.sh
+run "Kit:    " "${clean_env[@]}" $KIT_DIR/tools/test_kit.sh
 run "Kit:    " "${clean_env[@]}" python3 -I $KIT_DIR/tools/test_qa_dashboard.py
 run "Kit:    " "${clean_env[@]}" python3 -I $KIT_DIR/tools/test_layout_rules.py
 if [ -d "$KIT_DIR/ios" ]; then
