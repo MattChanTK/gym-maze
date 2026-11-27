@@ -4,7 +4,8 @@ import unittest
 
 os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 
-import gym  # noqa: E402
+import gymnasium as gym  # noqa: E402
+from gymnasium.utils.env_checker import check_env  # noqa: E402
 import numpy as np  # noqa: E402
 
 import gym_maze  # noqa: E402,F401  (registers the envs)
@@ -15,15 +16,29 @@ class MazeEnvTest(unittest.TestCase):
 
     def test_registered_envs_step(self):
         env = gym.make("maze-sample-5x5-v0")
-        env.reset()
-        obs, reward, done, info = env.step(env.action_space.sample())
+        obs, info = env.reset(seed=0)
         self.assertEqual(obs.shape, (2,))
+        obs, reward, terminated, truncated, info = env.step(env.action_space.sample())
+        self.assertEqual(obs.shape, (2,))
+        self.assertTrue(env.observation_space.contains(obs))
         env.close()
+
+    def test_gymnasium_env_checker(self):
+        check_env(MazeEnvSample5x5(), skip_render_check=True)
+
+    def test_reset_options_start(self):
+        env = MazeEnvSample5x5()
+        obs, _ = env.reset(options={"start": (1, 2)})
+        np.testing.assert_array_equal(obs, [1, 2])
+
+    def test_enable_render_alias(self):
+        self.assertEqual(MazeEnvSample5x5(enable_render=True).render_mode, "human")
+        self.assertIsNone(MazeEnvSample5x5(render_mode="rgb_array", enable_render=False).render_mode)
+        self.assertIsNone(MazeEnvSample5x5().render_mode)
 
     def test_numpy_int_action(self):
         env = MazeEnvSample5x5(enable_render=False)
-        env.reset()
-        start = env.state.copy()
+        start, _ = env.reset()
         for a in range(4):
             env.step(np.int64(a))
         env.reset()
@@ -31,9 +46,9 @@ class MazeEnvTest(unittest.TestCase):
 
     def test_returned_state_is_a_copy(self):
         env = MazeEnvSample5x5(enable_render=False)
-        obs0 = env.reset()
-        obs1, _, _, _ = env.step(1)
-        obs2, _, _, _ = env.step(2)
+        obs0, _ = env.reset()
+        obs1, *_ = env.step(1)
+        obs2, *_ = env.step(2)
         np.testing.assert_array_equal(obs0, [0, 0])
         self.assertIsNot(obs1, obs2)
 
@@ -41,11 +56,12 @@ class MazeEnvTest(unittest.TestCase):
         env = MazeEnvSample5x5(enable_render=False)
         env.reset()
         env.step(1)
-        self.assertIsNone(env.render(mode="rgb_array"))
+        self.assertIsNone(env.render())
 
     def test_render_enabled_rgb_array(self):
-        env = MazeEnvSample5x5()
-        img = env.render(mode="rgb_array")
+        env = MazeEnvSample5x5(render_mode="rgb_array")
+        env.reset()
+        img = env.render()
         self.assertEqual(img.ndim, 3)
 
     def test_custom_size(self):
@@ -55,8 +71,8 @@ class MazeEnvTest(unittest.TestCase):
     def test_zero_step_rewards(self):
         env = MazeEnvRandomCustom(maze_size=(6, 6), enable_render=False, zero_step_rewards=True)
         env.reset()
-        _, reward, done, _ = env.step(0)
-        if not done:
+        _, reward, terminated, _, _ = env.step(0)
+        if not terminated:
             self.assertEqual(reward, 0)
 
     def test_restore(self):
@@ -88,8 +104,9 @@ class MazeEnvTest(unittest.TestCase):
             path.append(d)
         env.reset()
         for i, d in enumerate(reversed(path)):
-            obs, reward, done, _ = env.step(d)
-            self.assertEqual(done, i == len(path) - 1)
+            obs, reward, terminated, truncated, _ = env.step(d)
+            self.assertEqual(terminated, i == len(path) - 1)
+            self.assertFalse(truncated)
         self.assertEqual(reward, 1)
         np.testing.assert_array_equal(obs, goal)
 

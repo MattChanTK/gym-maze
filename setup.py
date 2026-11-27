@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name="gym_maze",
-      version="0.5",
+      version="1.0",
       url="https://github.com/tuzzer/gym-maze",
       author="Matthew T.K. Chan",
       license="MIT",
@@ -9,5 +9,6 @@ setup(name="gym_maze",
       package_data = {
           "gym_maze.envs": ["maze_samples/*.npy"]
       },
-      install_requires = ["gym<0.26", "pygame", "numpy<2"]
+      python_requires=">=3.8",
+      install_requires = ["gymnasium>=1.0", "pygame", "numpy"]
 )
