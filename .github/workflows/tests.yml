@@ -15,8 +15,8 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      - run: pip install 'gym<0.26' pygame 'numpy<2'
+          python-version: '3.13'
+      - run: pip install 'gymnasium>=1.0' pygame numpy
       - run: git config --global user.email ci@example.com && git config --global user.name ci
       - run: python3 kit/tools/scan_secrets.py --all
       - run: touch CLAUDE.local.md && kit/tools/check.sh

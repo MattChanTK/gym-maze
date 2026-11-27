@@ -40,19 +40,34 @@ The agent can also teleport from a portal to another portal of the same colour.
 * 30 cells x 30 cells: _maze-random-30x30-plus-v0_
 
 ## Installation
-Requires Python 3, pygame, numpy < 2 and gym < 0.26 (gym 0.26 changed the `reset`/`step` API).
+Requires Python 3.8+, [gymnasium](https://gymnasium.farama.org) 1.0+, pygame and numpy (1.x or 2.x).
+
+Since v1.0 this package uses gymnasium, the maintained successor of OpenAI gym. Coming from the old gym API:
+* `import gymnasium as gym` instead of `import gym` (still `import gym_maze` to register the envs).
+* `obs, info = env.reset()` instead of `obs = env.reset()`.
+* `obs, reward, terminated, truncated, info = env.step(a)` instead of `obs, reward, done, info`.
+* Pass `render_mode="human"` or `"rgb_array"` to `gym.make`; `env.render()` takes no arguments.
+
+Need the old gym API? Install a pre-1.0 commit with `gym<0.26` and `numpy<2` (Python 3.12 or older).
 
 ```bash
 cd gym-maze
-python setup.py install
+pip install .
 ```
 ## Options
-* `enable_render=False`: run headless (no pygame window); `render()` then returns `None`.
+* `render_mode=None` (default): headless, no pygame window; `render()` returns `None`. `"human"` opens a window, `"rgb_array"` makes `render()` return an image. The older `enable_render=True/False` still works.
+* Actions: 0=N, 1=S, 2=E, 3=W (or the strings). Walking into a wall leaves the agent in place.
 * `zero_step_rewards=True`: reward 0 per step instead of -0.1/(number of cells).
-* `env.restore((x, y))`: continue an episode from a given cell.
+* `env.reset(options={"start": (x, y)})`: start an episode from a given cell. `env.restore((x, y))` moves the agent mid-episode.
 
 ## Examples
 An example of finding the shortest path through the maze using Q-learning can be found here: https://github.com/tuzzer/ai-gym/blob/master/maze_2d/maze_2d_q_learning.py
+
+That script uses the old gym API. To run it with v1.0+:
+* `import gymnasium as gym` and `env = gym.make("maze-random-10x10-plus-v0", render_mode="human")`.
+* `obv, _ = env.reset()` and `obv, reward, done, truncated, _ = env.step(action)`.
+* `env.unwrapped.is_game_over()` instead of `env.is_game_over()`.
+* Call `env.reset()` before the first `env.render()`.
 
 ![Solving 20x20 maze with loops and portals using Q-Learning](http://i.giphy.com/rfazKQngdaja8.gif)
 

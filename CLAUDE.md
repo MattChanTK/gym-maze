@@ -1,6 +1,6 @@
 # gym-maze
 
-OpenAI Gym 2D maze environment (Python, gym<0.26, pygame, numpy<2). Main branch: `master`.
+Gymnasium 2D maze environment (Python 3.8+, gymnasium>=1.0, pygame, numpy). Main branch: `master`.
 Shared tooling: `kit/` = dev-kit at the tag in `kit/VERSION` (see Kit below). Settings the tools read: `kit.env`. Secrets: git-ignored `.env.local` and `CLAUDE.local.md`, never committed.
 File map: docs/CODE_OVERVIEW.md and docs/code/ (keep updated when files change).
 Words with a set meaning: docs/GLOSSARY.md. Read before naming things or writing copy; add a row when you coin a term.

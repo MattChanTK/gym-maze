@@ -2,6 +2,13 @@
 
 Newest first. Each entry: date, what was built, decisions, lessons, commit hashes. Older entries: `docs/changelog/`.
 
+## 2026-11-27 v1.0: move to gymnasium, add LICENSE
+- Old `gym` is unmaintained and `numpy<2` has no Python 3.13 wheels, so v0.5 pins could not install cleanly on current Python. Moved to `gymnasium>=1.0`, any numpy, Python 3.8+.
+- API now gymnasium style: `reset(seed=, options=)` returns `(obs, info)`; `step` returns `(obs, reward, terminated, truncated, info)`; `render_mode` in the constructor, `render()` no args. `enable_render` kept as alias. Default is now headless (no window unless `render_mode` set).
+- `reset(options={"start": (x, y)})` (#12). Obs dtype int64 to match observation_space. gymnasium `check_env` added to tests.
+- Added MIT LICENSE (#17). setup.py version 1.0. CI on Python 3.13.
+- Tested: gymnasium 1.0.0 and 1.4.0, numpy 2.5, Python 3.13, 12 tests pass with UserWarning as error.
+
 ## 2026-11-27 Open PR cleanup + dev-kit v0.2.0
 - dev-kit v0.2.0 installed (kit/, CLAUDE.md, docs/, tests workflow).
 - From PR #22 (lcdbezerra): README uses real env ids; numpy int actions accepted; obs returned as copies. Dropped its pickle maze loader and exact pins; pins now `gym<0.26`, `numpy<2`.
