@@ -61,6 +61,13 @@ register(
 )
 
 register(
+    id='maze-random-custom-v0',
+    entry_point='gym_maze.envs:MazeEnvRandomCustom',
+    max_episode_steps=1000000,
+    nondeterministic=True,
+)
+
+register(
     id='maze-random-10x10-plus-v0',
     entry_point='gym_maze.envs:MazeEnvRandom10x10Plus',
     max_episode_steps=1000000,

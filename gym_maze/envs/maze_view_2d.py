@@ -112,6 +112,12 @@ class MazeView2D:
         self.__robot = np.zeros(2, dtype=int)
         self.__draw_robot(transparency=255)
 
+    def restore_robot(self, state):
+
+        self.__draw_robot(transparency=0)
+        self.__robot = np.array(state, dtype=int)
+        self.__draw_robot(transparency=255)
+
     def __controller_update(self):
         if not self.__game_over:
             for event in pygame.event.get():
@@ -120,6 +126,9 @@ class MazeView2D:
                     self.quit_game()
 
     def __view_update(self, mode="human"):
+        # Nothing to draw when rendering is disabled (no pygame screen exists).
+        if self.__enable_render is False:
+            return None
         if not self.__game_over:
             # update the robot's position
             self.__draw_entrance()

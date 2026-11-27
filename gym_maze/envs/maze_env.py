@@ -13,10 +13,11 @@ class MazeEnv(gym.Env):
 
     ACTION = ["N", "S", "E", "W"]
 
-    def __init__(self, maze_file=None, maze_size=None, mode=None, enable_render=True):
+    def __init__(self, maze_file=None, maze_size=None, mode=None, enable_render=True, zero_step_rewards=False):
 
         self.viewer = None
         self.enable_render = enable_render
+        self.zero_step_rewards = zero_step_rewards
 
         if maze_file:
             self.maze_view = MazeView2D(maze_name="OpenAI Gym - Maze (%s)" % maze_file,
@@ -71,7 +72,7 @@ class MazeEnv(gym.Env):
         return [seed]
 
     def step(self, action):
-        if isinstance(action, int):
+        if isinstance(action, (int, np.integer)):
             self.maze_view.move_robot(self.ACTION[action])
         else:
             self.maze_view.move_robot(action)
@@ -80,10 +81,13 @@ class MazeEnv(gym.Env):
             reward = 1
             done = True
         else:
-            reward = -0.1/(self.maze_size[0]*self.maze_size[1])
+            if self.zero_step_rewards:
+                reward = 0
+            else:
+                reward = -0.1/(self.maze_size[0]*self.maze_size[1])
             done = False
 
-        self.state = self.maze_view.robot
+        self.state = self.maze_view.robot.copy()
 
         info = {}
 
@@ -91,10 +95,18 @@ class MazeEnv(gym.Env):
 
     def reset(self):
         self.maze_view.reset_robot()
-        self.state = np.zeros(2)
+        self.state = np.zeros(2, dtype=int)
         self.steps_beyond_done = None
         self.done = False
-        return self.state
+        return self.state.copy()
+
+    def restore(self, state):
+        """Put the robot at `state` (an (x, y) cell) and continue the episode from there."""
+        self.maze_view.restore_robot(state)
+        self.state = self.maze_view.robot.copy()
+        self.steps_beyond_done = None
+        self.done = False
+        return self.state.copy()
 
     def is_game_over(self):
         return self.maze_view.game_over
@@ -152,6 +164,13 @@ class MazeEnvRandom100x100(MazeEnv):
 
     def __init__(self, enable_render=True):
         super(MazeEnvRandom100x100, self).__init__(maze_size=(100, 100), enable_render=enable_render)
+
+
+class MazeEnvRandomCustom(MazeEnv):
+
+    def __init__(self, maze_size, enable_render=True, zero_step_rewards=False):
+        super(MazeEnvRandomCustom, self).__init__(maze_size=tuple(maze_size), enable_render=enable_render,
+                                                  zero_step_rewards=zero_step_rewards)
 
 
 class MazeEnvRandom10x10Plus(MazeEnv):
