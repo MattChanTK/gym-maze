@@ -2,6 +2,9 @@
 
 Newest first. Each entry: date, what was built, decisions, lessons, commit hashes. Older entries: `docs/changelog/`.
 
+## 2026-11-27 Remove docs/company
+- Deleted docs/company/ (MINUTES.md, STRUCTURE.md) and the MINUTES line in CLAUDE.md: not needed (Matthew). Decisions live in this changelog. Same change in dev-kit PR #4 (v0.3.1).
+
 ## 2026-11-27 Daily maintenance bot
 - Added docs/AUTOMATION.md: runbook and guardrails for a daily scheduled Claude session (health check, kit updates, issue/PR triage, `needs-approval` label, pinned "Bot daily log" issue).
 
