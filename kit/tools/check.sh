@@ -23,9 +23,13 @@ run "Kit:    " "${clean_env[@]}" python3 -I $KIT_DIR/tools/test_roll_changelog.p
 [ -f docs/CHANGELOG.md ] && run "Kit:    " python3 $KIT_DIR/tools/roll_changelog.py --check
 run "Kit:    " "${clean_env[@]}" $KIT_DIR/tools/test_worktree.sh
 run "Kit:    " "${clean_env[@]}" $KIT_DIR/tools/test_lane.sh
+run "Kit:    " "${clean_env[@]}" $KIT_DIR/tools/test_qa.sh
+run "Kit:    " "${clean_env[@]}" python3 -I $KIT_DIR/tools/test_qa_dashboard.py
+run "Kit:    " "${clean_env[@]}" python3 -I $KIT_DIR/tools/test_layout_rules.py
 if [ -d "$KIT_DIR/ios" ]; then
     for t in "$KIT_DIR"/ios/test_*.py; do run "Kit:    " "${clean_env[@]}" python3 -I "$t"; done
     run "Kit:    " "${clean_env[@]}" $KIT_DIR/ios/test_swift_gate.sh
+    run "Kit:    " "${clean_env[@]}" $KIT_DIR/ios/test_check_layouts.sh
 fi
 while IFS= read -r cmd; do
     [ -n "${cmd// }" ] && run "Repo:   " "$cmd"
