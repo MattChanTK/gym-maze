@@ -4,3 +4,5 @@ One name per thing, so a bug report, ticket or chat can point at it without a sc
 
 | Name | What it is | Code |
 |---|---|---|
+| needs-approval | GitHub label: the daily bot needs Matthew's yes before acting | docs/AUTOMATION.md |
+| Bot daily log | Pinned GitHub issue where the daily bot logs each run | docs/AUTOMATION.md |
