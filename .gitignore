@@ -87,3 +87,10 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# dev-kit
+.env.local
+CLAUDE.local.md
+*.p8
+*.pem
+feedbacks/
