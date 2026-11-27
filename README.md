@@ -63,5 +63,11 @@ pip install .
 ## Examples
 An example of finding the shortest path through the maze using Q-learning can be found here: https://github.com/tuzzer/ai-gym/blob/master/maze_2d/maze_2d_q_learning.py
 
+That script uses the old gym API. To run it with v1.0+:
+* `import gymnasium as gym` and `env = gym.make("maze-random-10x10-plus-v0", render_mode="human")`.
+* `obv, _ = env.reset()` and `obv, reward, done, truncated, _ = env.step(action)`.
+* `env.unwrapped.is_game_over()` instead of `env.is_game_over()`.
+* Call `env.reset()` before the first `env.render()`.
+
 ![Solving 20x20 maze with loops and portals using Q-Learning](http://i.giphy.com/rfazKQngdaja8.gif)
 

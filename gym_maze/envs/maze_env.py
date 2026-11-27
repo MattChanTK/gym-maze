@@ -130,7 +130,8 @@ class MazeEnv(gym.Env):
         mode = mode or self.render_mode
         if mode is None:
             return None
-        return self.maze_view.update(mode)
+        img = self.maze_view.update(mode)
+        return img if mode == "rgb_array" else None
 
 
 class MazeEnvSample5x5(MazeEnv):

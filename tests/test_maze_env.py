@@ -64,6 +64,11 @@ class MazeEnvTest(unittest.TestCase):
         img = env.render()
         self.assertEqual(img.ndim, 3)
 
+    def test_render_human_returns_none(self):
+        env = MazeEnvSample5x5(render_mode="human")
+        env.reset()
+        self.assertIsNone(env.render())
+
     def test_custom_size(self):
         env = gym.make("maze-random-custom-v0", maze_size=(7, 4), enable_render=False)
         self.assertEqual(tuple(env.unwrapped.maze_size), (7, 4))
