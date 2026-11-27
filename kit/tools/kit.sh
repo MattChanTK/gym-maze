@@ -12,10 +12,18 @@ tmp=$(mktemp -d "${TMPDIR:-/tmp}/kit.XXXXXX"); trap 'rm -rf "$tmp"' EXIT
 
 latest_tag() { git ls-remote --tags --refs "$remote" 'v*' | sed 's|.*refs/tags/||' | sort -V | tail -1; }
 fetch_tag() { git clone -q --depth 1 --branch "$1" "$remote" "$tmp/dk" 2>/dev/null || { echo "Can't fetch $1 from $remote"; exit 1; }; }
+# copy_kit <from> <to>: replace folder <to> with <from>, without __pycache__. Add-on kit/ios/ only if <to> already had it.
+copy_kit() {
+    local had_ios=0; [ -d "$2/ios" ] && had_ios=1
+    rm -rf "$2"; cp -R "$1" "$2"; find "$2" -name __pycache__ -prune -exec rm -rf {} +
+    [ $had_ios -eq 1 ] || rm -rf "$2/ios"
+}
 # local_edits: files in kit/ that differ from the pinned tag (needs the tag fetched into $tmp/dk).
-# copy_kit <from> <to>: replace folder <to> with <from>, without __pycache__.
-copy_kit() { rm -rf "$2"; cp -R "$1" "$2"; find "$2" -name __pycache__ -prune -exec rm -rf {} +; }
-local_edits() { diff -rq --exclude=__pycache__ --exclude=VERSION "$tmp/dk/kit" "$KIT_DIR" | sed "s|$tmp/dk/||; s|$(pwd)/||" || true; }
+# A project without kit/ios/ (installed without --ios) is not a local edit.
+local_edits() {
+    local ex=(--exclude=__pycache__ --exclude=VERSION); [ -d "$KIT_DIR/ios" ] || ex+=(--exclude=ios)
+    diff -rq "${ex[@]}" "$tmp/dk/kit" "$KIT_DIR" | sed "s|$tmp/dk/||; s|$(pwd)/||" || true
+}
 
 case "${1:-status}" in
 status)
@@ -40,7 +48,10 @@ contribute)
     branch=${2:?usage: kit.sh contribute <branch>}
     fetch_tag "$pinned"; edits=$(local_edits)
     [ -n "$edits" ] || { echo "no local edits to contribute"; exit 0; }
-    keep=$(cat "$tmp/dk/kit/VERSION"); copy_kit "$KIT_DIR" "$tmp/dk/kit"; echo "$keep" > "$tmp/dk/kit/VERSION"
+    keep=$(cat "$tmp/dk/kit/VERSION")
+    [ -d "$KIT_DIR/ios" ] || [ ! -d "$tmp/dk/kit/ios" ] || mv "$tmp/dk/kit/ios" "$tmp/ios"   # project without the add-on: keep dev-kit's copy
+    copy_kit "$KIT_DIR" "$tmp/dk/kit"; echo "$keep" > "$tmp/dk/kit/VERSION"
+    [ ! -d "$tmp/ios" ] || mv "$tmp/ios" "$tmp/dk/kit/ios"
     git -C "$tmp/dk" checkout -q -b "$branch"
     git -C "$tmp/dk" add -A kit
     # Scan with this repo's secret values (dev-kit git-ignores these files).

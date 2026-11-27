@@ -32,7 +32,6 @@ Never merge with required checks red or missing. Required check: `tests`.
 Ask first: push, deploy, anything that calls a paid API, anything that changes live data.
 
 ## Docs (keep them in this shape)
-Log notable decisions as a short dated entry in `docs/company/MINUTES.md` (newest first).
 - `README.md`: what it does, install, setup. Update when a feature changes.
 - `docs/CHANGELOG.md`: newest first; date, what was built, decisions, lessons, commit hashes. Add an entry with each change. Over 80 KB: `python3 kit/tools/roll_changelog.py` (check.sh fails until you do). Read only the top or grep.
 - `docs/BACKLOG.md`: unbuilt work in priority order: a table (code, item, owner, impact, effort), each row linking `docs/backlog/<KIND>/<CODE>.md`. Code = kind + next number, never reused (e.g. APP-007). Done or dropped: delete file and row, add a row to ARCHIVE, name the code in CHANGELOG. No changelog entry for just filing a ticket.

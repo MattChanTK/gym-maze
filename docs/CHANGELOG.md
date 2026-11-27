@@ -2,6 +2,15 @@
 
 Newest first. Each entry: date, what was built, decisions, lessons, commit hashes. Older entries: `docs/changelog/`.
 
+## 2026-11-27 kit v0.3.2, no iOS add-on
+- kit/ updated -> v0.3.2 (cf27276) and kit/ios removed: gym-maze is not an iOS app. From v0.3.2 kit.sh update keeps kit/ios out of projects without it. check.sh pass.
+
+## 2026-11-27 kit v0.3.1
+- kit/ updated v0.2.1 -> v0.3.1 (a004a2d): qa.sh, QA dashboard, layout_rules, iOS layout/release tools, shared lanes; template drops docs/company. check.sh pass (13 tests).
+
+## 2026-11-27 Remove docs/company
+- Deleted docs/company/ (MINUTES.md, STRUCTURE.md) and the MINUTES line in CLAUDE.md: not needed (Matthew). Decisions live in this changelog. Same change in dev-kit PR #4 (v0.3.1).
+
 ## 2026-11-27 Daily maintenance bot
 - Added docs/AUTOMATION.md: runbook and guardrails for a daily scheduled Claude session (health check, kit updates, issue/PR triage, `needs-approval` label, pinned "Bot daily log" issue).
 

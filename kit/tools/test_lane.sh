@@ -190,7 +190,7 @@ fi
 # tools/*.sh must take a lane or be added here.
 lane_allowed() {
     case "$1" in
-        check.sh|commit.sh|kit.sh|dashboard_url.sh|test_swift_gate.sh) return 0 ;;
+        check.sh|commit.sh|kit.sh|dashboard_url.sh|test_swift_gate.sh|test_qa.sh|test_check_layouts.sh) return 0 ;;
         fetch_test_photos.sh|lane.sh|lib.sh|mac_pass_check.sh) return 0 ;;
         mail_report.sh|openrouter_usage.sh|pick_mac_runner.sh|push.sh) return 0 ;;
         run_js.sh|swift_gate.sh|test_cache.sh) return 0 ;;
