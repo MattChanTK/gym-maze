@@ -2,6 +2,10 @@
 
 Newest first. Each entry: date, what was built, decisions, lessons, commit hashes. Older entries: `docs/changelog/`.
 
+## 2026-11-28 kit v0.4.2
+- kit/ updated v0.3.2 -> v0.4.2 (daily bot): kit_env.py (Python tools load kit.env themselves), mac_runner.sh, lane owner + multi-repo QA dashboard. check.sh pass (13 tests).
+- Not taken: v0.4.0 self-hosted Mac `tests.yml`. gym-maze keeps ubuntu-latest CI; `.github/` edits need Matthew.
+
 ## 2026-11-27 kit v0.3.2, no iOS add-on
 - kit/ updated -> v0.3.2 (cf27276) and kit/ios removed: gym-maze is not an iOS app. From v0.3.2 kit.sh update keeps kit/ios out of projects without it. check.sh pass.
 

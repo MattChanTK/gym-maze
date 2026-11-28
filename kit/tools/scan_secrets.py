@@ -16,6 +16,9 @@ import os
 import re
 import subprocess
 import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from kit_env import load_kit_env  # noqa: E402
+load_kit_env()
 
 PATTERNS = {
     "a private key block": r"BEGIN [A-Z ]*PRIVATE KEY",
