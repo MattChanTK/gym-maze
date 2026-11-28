@@ -3,7 +3,7 @@
 Newest first. Each entry: date, what was built, decisions, lessons, commit hashes. Older entries: `docs/changelog/`.
 
 ## 2026-11-28 CI on self-hosted Mac
-- `tests.yml` from kit v0.4.0 template (Matthew asked): runs on self-hosted Mac (label `mac`), waits while it sleeps; PR label `ci-on-github` runs on ubuntu-latest. No `git config --global` (GIT_AUTHOR_*/GIT_COMMITTER_* env). Deps in a venv under RUNNER_TEMP so the Mac's Python stays clean. Python is the runner's python3 (was setup-python 3.13).
+- `tests.yml` from kit v0.4.0 template (Matthew asked): runs on self-hosted Mac (label `mac`), waits while it sleeps; PR label `ci-on-github` runs on ubuntu-latest. No `git config --global` (GIT_AUTHOR_*/GIT_COMMITTER_* env). Deps in a venv under RUNNER_TEMP so the Mac's Python stays clean. Mac uses its own python3; GitHub-hosted keeps setup-python 3.13 (3.14 has no pygame wheel).
 - Needs a runner for this repo on the Mac: `kit/tools/mac_runner.sh register MattChanTK/gym-maze mac`.
 
 ## 2026-11-28 kit v0.4.2

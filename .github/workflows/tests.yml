@@ -23,6 +23,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-python@v5   # ubuntu's python3 is 3.14: no pygame wheel yet
+        if: runner.environment == 'github-hosted'
+        with:
+          python-version: '3.13'
       - run: |
           python3 -m venv "$RUNNER_TEMP/venv"
           "$RUNNER_TEMP/venv/bin/pip" install -q 'gymnasium>=1.0' pygame numpy
