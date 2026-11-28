@@ -13,6 +13,10 @@ startup and about every 60 s with the current LAN address (ipconfig getifaddr
 en0, otherwise the first non-loopback IPv4). The token is kept and is never
 printed or logged. No controls: the page only reads.
 
+Open PRs come from gh for every repo in KIT_DASHBOARD_REPOS (owner/repo, space
+or comma separated; default: this checkout's own repo), one list, each prefixed
+with its repo.
+
 Lane state comes from tools/lane.py's <lock dir>/meta/<pid>.json files; dead
 pids are dropped. Python 3.9+, standard library only.
 """
@@ -34,6 +38,9 @@ import tempfile
 import threading
 import time
 import urllib.parse
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from kit_env import load_kit_env  # noqa: E402
+load_kit_env()
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -50,6 +57,16 @@ def _toplevel():
 
 ROOT = _toplevel()   # the project repo that vendors kit/
 TITLE = os.environ.get("KIT_DASHBOARD_TITLE") or ("%s QA" % os.environ.get("KIT_PROJECT", "")).strip()
+REPOS_RAW = os.environ.get("KIT_DASHBOARD_REPOS", "")
+
+
+def dashboard_repos(raw):
+    """owner/repo names from KIT_DASHBOARD_REPOS; [None] (this checkout's repo) when empty."""
+    names = [r for r in re.split(r"[\s,]+", raw or "") if r]
+    bad = [r for r in names if not re.fullmatch(r"[\w.-]+/[\w.-]+", r)]
+    if bad:
+        raise SystemExit("KIT_DASHBOARD_REPOS: not owner/repo: %s" % " ".join(bad))
+    return names or [None]
 DEFAULT_PORT = 8765
 COOKIE = "qa_token"
 LABEL = "com.kit.qa-dashboard"
@@ -338,7 +355,9 @@ def lanes(ldir, now=None):
             continue
         cwd = rec.get("cwd") or ""
         row = {"pid": rec.get("pid"), "command": scrub(str(rec.get("command") or "")), "cwd": cwd,
-               "clone": os.path.basename(cwd.rstrip("/")) or cwd, "branch": rec.get("branch"), "slot": rec.get("slot")}
+               "clone": os.path.basename(cwd.rstrip("/")) or cwd, "branch": rec.get("branch"), "slot": rec.get("slot"),
+               "by": scrub(str(rec.get("by") or "")) or None,
+               "by_url": rec.get("by_url") if str(rec.get("by_url") or "").startswith("https://github.com/") else None}
         if rec.get("state") == "running" and started:
             row["elapsed_s"] = round(now - started, 1)
             out[rec["lane"]]["holders"].append(row)
@@ -440,25 +459,43 @@ def checks_summary(rollup):
     return s
 
 
-def open_prs():
+def repo_label(repo):
+    return repo.split("/", 1)[1] if repo else os.path.basename(ROOT)
+
+
+def open_prs(repo=None, runner=None):
     fields = "number,title,headRefName,author,isDraft,updatedAt,url,reviewDecision,statusCheckRollup"
-    out = run(["gh", "pr", "list", "--state", "open", "--limit", "30", "--json", fields], timeout=30, cwd=ROOT)
+    argv = ["gh", "pr", "list", "--state", "open", "--limit", "30", "--json", fields] + (["--repo", repo] if repo else [])
+    out = (runner or (lambda a: run(a, timeout=30, cwd=ROOT)))(argv)
     if out.returncode != 0:
         raise RuntimeError("gh exited %d" % out.returncode)
     prs = []
     for p in json.loads(out.stdout):
-        prs.append({"number": p.get("number"), "title": scrub(p.get("title") or ""), "branch": p.get("headRefName"),
+        prs.append({"repo": repo_label(repo), "number": p.get("number"), "title": scrub(p.get("title") or ""), "branch": p.get("headRefName"),
                     "author": (p.get("author") or {}).get("login"), "draft": p.get("isDraft"),
                     "updated_at": p.get("updatedAt"), "url": p.get("url"), "review": p.get("reviewDecision"),
                     "checks": checks_summary(p.get("statusCheckRollup"))})
     return prs
 
 
+def all_open_prs(repos, fetch=open_prs):
+    """One list over every repo, newest update first; a repo that fails adds an error line, the rest still show."""
+    items, errors = [], []
+    for repo in repos:
+        try:
+            items.extend(fetch(repo))
+        except (OSError, subprocess.SubprocessError, RuntimeError, ValueError) as e:
+            errors.append("%s: gh pr list failed: %s" % (repo_label(repo), e if isinstance(e, RuntimeError) else type(e).__name__))
+    items.sort(key=lambda p: p.get("updated_at") or "", reverse=True)
+    return {"items": items, "updated_at": time.time(), "error": "; ".join(errors) or None}
+
+
 class Cache:
     """Slow facts (health, PRs) refreshed in background threads so /api/status stays fast."""
 
-    def __init__(self):
+    def __init__(self, repos=None):
         self.lock = threading.Lock()
+        self.repos = repos or [None]
         self.health = {"updated_at": None, "load": None, "swap": None, "simulators": None, "errors": ["starting"]}
         self.prs = {"items": [], "updated_at": None, "error": "starting"}
 
@@ -468,11 +505,7 @@ class Cache:
             self.health = h
 
     def refresh_prs(self):
-        try:
-            p = {"items": open_prs(), "updated_at": time.time(), "error": None}
-        except (OSError, subprocess.SubprocessError, RuntimeError, ValueError) as e:
-            with self.lock:
-                p = dict(self.prs, error="gh pr list failed: %s" % (e if isinstance(e, RuntimeError) else type(e).__name__))
+        p = all_open_prs(self.repos)
         with self.lock:
             self.prs = p
 
@@ -594,7 +627,10 @@ def launchagent_plist(port, ldir, qa_logs):
     return {"Label": LABEL,
             "ProgramArguments": ["/usr/bin/python3", os.path.abspath(__file__), "--port", str(port)],
             "WorkingDirectory": ROOT, "RunAtLoad": True, "KeepAlive": True, "ProcessType": "Background",
-            "EnvironmentVariables": {"PATH": path_env, "KIT_LANE_DIR": ldir, "KIT_QA_LOG_DIR": qa_logs},
+            # The agent doesn't load kit.env, so the title travels here.
+            "EnvironmentVariables": {"PATH": path_env, "KIT_LANE_DIR": ldir, "KIT_QA_LOG_DIR": qa_logs,
+                                     **({"KIT_DASHBOARD_TITLE": TITLE} if TITLE else {}),
+                                     **({"KIT_DASHBOARD_REPOS": REPOS_RAW} if REPOS_RAW else {})},
             "StandardOutPath": logfile, "StandardErrorPath": logfile}
 
 
@@ -637,7 +673,7 @@ def main(argv=None):
     LOCAL_VALUES = local_secret_values()
     cdir = config_dir()
     token = load_token(cdir)
-    cache = Cache()
+    cache = Cache(dashboard_repos(REPOS_RAW))
     cache.start()
     srv = make_server(args.host, args.port, token, lane_dir(), log_dir(), cache)
     port = srv.server_address[1]
@@ -691,14 +727,16 @@ const $ = id => document.getElementById(id);
 function el(tag, cls, text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
 function dur(s){s=Math.max(0,Math.round(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),r=s%60;return h?`${h}h ${m}m`:m?`${m}m ${r}s`:`${r}s`;}
 function ago(t){return t?dur(Date.now()/1000-t)+" ago":"never";}
+function by(r,h){if(!h.by)return;const d=el("div","dim");
+  if(h.by_url){const a=el("a","",h.by);a.href=h.by_url;a.target="_blank";a.rel="noreferrer";d.append("by ",a);}else d.textContent="by "+h.by;r.append(d);}
 function lane(box, l){
   box.replaceChildren();
   const used=l.holders.length;
   box.append(el("div","",`${used}/${l.slots} busy · ${l.waiters.length} waiting`));
   for(const h of l.holders){const r=el("div","row");r.append(el("div","cmd",h.command));
-    r.append(el("div","dim",`▶ ${dur(h.elapsed_s)} · ${h.clone}${h.branch?" @ "+h.branch:""} · pid ${h.pid}${h.slot&&h.slot!=="heavy"?" · "+h.slot:""}`));box.append(r);}
+    by(r,h);r.append(el("div","dim",`▶ ${dur(h.elapsed_s)} · ${h.clone}${h.branch?" @ "+h.branch:""} · pid ${h.pid}${h.slot&&h.slot!=="heavy"?" · "+h.slot:""}`));box.append(r);}
   for(const w of l.waiters){const r=el("div","row");r.append(el("div","cmd",w.command));
-    r.append(el("div","dim warn",`⏳ waiting ${dur(w.waiting_s)} · ${w.clone}${w.branch?" @ "+w.branch:""} · pid ${w.pid}`));box.append(r);}
+    by(r,w);r.append(el("div","dim warn",`⏳ waiting ${dur(w.waiting_s)} · ${w.clone}${w.branch?" @ "+w.branch:""} · pid ${w.pid}`));box.append(r);}
 }
 function health(box,h){
   box.replaceChildren();
@@ -713,7 +751,7 @@ function health(box,h){
 function prs(box,p){
   box.replaceChildren();
   if(!p.items.length)box.append(el("div","dim",p.error?"":"No open PRs"));
-  for(const x of p.items){const r=el("div","row");const a=el("a","",`#${x.number} ${x.title}`);a.href=x.url;a.target="_blank";a.rel="noreferrer";r.append(a);
+  for(const x of p.items){const r=el("div","row");const a=el("a","",`${x.repo} #${x.number} ${x.title}`);a.href=x.url;a.target="_blank";a.rel="noreferrer";r.append(a);
     const c=x.checks,meta=el("div","dim");
     meta.append(el("span","pill "+(c.fail?"bad":c.pending?"warn":"ok"),c.fail?`${c.fail} failing`:c.pending?`${c.pending} pending`:`${c.pass} passed`));
     if(x.draft)meta.append(el("span","pill","draft"));if(x.review)meta.append(el("span","pill",x.review.toLowerCase().replace("_"," ")));

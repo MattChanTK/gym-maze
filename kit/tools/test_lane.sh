@@ -192,7 +192,7 @@ lane_allowed() {
     case "$1" in
         check.sh|commit.sh|kit.sh|dashboard_url.sh|test_swift_gate.sh|test_qa.sh|test_check_layouts.sh) return 0 ;;
         fetch_test_photos.sh|lane.sh|lib.sh|mac_pass_check.sh) return 0 ;;
-        mail_report.sh|openrouter_usage.sh|pick_mac_runner.sh|push.sh) return 0 ;;
+        mac_runner.sh|mail_report.sh|openrouter_usage.sh|pick_mac_runner.sh|push.sh) return 0 ;;
         run_js.sh|swift_gate.sh|test_cache.sh) return 0 ;;
         test_check_layouts_order.sh|test_lane.sh|test_mac_pass.sh|test_ops009.sh|test_qa.sh) return 0 ;;
         test_worktree.sh|test_protected_checkout.sh|test_testflight_guard.sh|test_wrappers.sh) return 0 ;;

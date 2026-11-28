@@ -254,6 +254,14 @@ test("dead pids and bad files are dropped",
 test("holder shows clone, branch, elapsed",
      lambda: (lambda h: h["clone"] == "c1" and h["branch"] == "b1" and 9 <= h["elapsed_s"] <= 60)(
          status()["lanes"]["heavy"]["holders"][0]))
+def by_fields():
+    write_meta(me, "heavy", "running", by="GitHub aestro PR #1 · ci / tests", by_url="https://github.com/o/a/actions/runs/1")
+    ok = (lambda h: h["by"].startswith("GitHub aestro PR #1") and h["by_url"].endswith("/runs/1"))(status()["lanes"]["heavy"]["holders"][0])
+    write_meta(me, "heavy", "running", by="x", by_url="javascript:alert(1)")
+    ok = ok and status()["lanes"]["heavy"]["holders"][0]["by_url"] is None
+    write_meta(me, "heavy", "running")
+    return ok
+test("holder shows who started it; only github.com links", by_fields)
 test("newest log is selected and its tail is scrubbed",
      lambda: (lambda l: l["selected"] == "new.log" and "line1" in l["tail"] and "sk-or" not in l["tail"]
               and "example.com" not in l["tail"])(status()["logs"]))
@@ -289,10 +297,53 @@ test("scrub keeps ordinary lines", lambda: qd.scrub("PASS 612 tests in 9 s, comm
      "PASS 612 tests in 9 s, commit 60e62a4")
 test("scrub hides CLAUDE.local.md values", lambda: "MYDEVICE42" not in qd.scrub("run on MYDEVICE42", extra=["MYDEVICE42"]))
 
+# ---- PRs from several repos ----
+test("repos: empty means this checkout", lambda: qd.dashboard_repos("") == [None])
+test("repos: space or comma list", lambda: qd.dashboard_repos("o/a, o/b  o/c") == ["o/a", "o/b", "o/c"])
+def bad_repo():
+    try:
+        qd.dashboard_repos("o/a nope")
+    except SystemExit as e:
+        return "nope" in str(e)
+    return False
+test("repos: not owner/repo fails fast", bad_repo)
+def prs_argv():
+    seen = []
+    def runner(argv):
+        seen.append(argv)
+        return _Cmd(json.dumps([{"number": 3, "title": "t", "updatedAt": "2026-11-27T10:00:00Z"}]))
+    p = qd.open_prs("o/dev-kit", runner)
+    return seen[0][-2:] == ["--repo", "o/dev-kit"] and p[0]["repo"] == "dev-kit" and p[0]["number"] == 3
+test("open_prs asks gh for that repo and prefixes its name", prs_argv)
+def merged_list():
+    def fetch(repo):
+        if repo == "o/broken":
+            raise RuntimeError("gh exited 1")
+        return [{"repo": repo_name, "updated_at": u} for repo_name, u in {"o/a": [("a", "2026-11-27T09:00:00Z")],
+                "o/b": [("b", "2026-11-27T11:00:00Z")]}[repo]]
+    p = qd.all_open_prs(["o/a", "o/broken", "o/b"], fetch)
+    return [x["repo"] for x in p["items"]] == ["b", "a"] and "broken" in p["error"]
+test("one PR list over repos, newest first; a failing repo leaves the rest", merged_list)
+def plist_repos():
+    saved, qd.REPOS_RAW = qd.REPOS_RAW, "o/a o/b"
+    try:
+        return qd.launchagent_plist(8765, LANES, LOGS)["EnvironmentVariables"].get("KIT_DASHBOARD_REPOS") == "o/a o/b"
+    finally:
+        qd.REPOS_RAW = saved
+test("plist carries KIT_DASHBOARD_REPOS", plist_repos)
+
 # ---- LaunchAgent plist ----
 test("plist has the label and no token",
      lambda: (lambda p: p["Label"] == "com.kit.qa-dashboard" and TOKEN not in json.dumps(p)
               and p["ProgramArguments"][1].endswith("qa_dashboard.py"))(qd.launchagent_plist(8765, LANES, LOGS)))
+def plist_title(title):
+    saved, qd.TITLE = qd.TITLE, title
+    try:
+        return qd.launchagent_plist(8765, LANES, LOGS)["EnvironmentVariables"].get("KIT_DASHBOARD_TITLE")
+    finally:
+        qd.TITLE = saved
+test("plist carries the page title", lambda: plist_title("Demo QA") == "Demo QA")
+test("plist leaves out an empty title", lambda: plist_title("") is None)
 
 srv.shutdown()
 
@@ -403,6 +454,24 @@ def lane_keeps_exit_code():
 
 
 test("lane.py writes status on wait and hold, removes it on release", lane_meta_lifecycle)
+
+# ---- who started a lane run ----
+import importlib.util
+_spec = importlib.util.spec_from_file_location("lane_mod", LANE)
+lane_mod = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(lane_mod)
+GH = {"GITHUB_ACTIONS": "true", "GITHUB_REPOSITORY": "o/aestro", "GITHUB_WORKFLOW": "swift", "GITHUB_JOB": "mac",
+      "GITHUB_RUN_ID": "42", "GITHUB_SERVER_URL": "https://github.com"}
+test("by: GitHub PR job names repo, PR, workflow/job and links the run",
+     lambda: lane_mod.started_by(dict(GH, GITHUB_REF="refs/pull/147/merge")) ==
+     {"by": "GitHub aestro PR #147 · swift / mac", "by_url": "https://github.com/o/aestro/actions/runs/42"})
+test("by: GitHub push job names the branch",
+     lambda: lane_mod.started_by(dict(GH, GITHUB_REF="refs/heads/main", GITHUB_REF_NAME="main"))["by"] ==
+     "GitHub aestro main · swift / mac")
+test("by: Claude session shows a short id",
+     lambda: lane_mod.started_by({"CLAUDECODE": "1", "CLAUDE_CODE_SESSION_ID": "abcdef1234567"})["by"] == "Claude session abcdef12")
+test("by: KIT_LANE_OWNER wins", lambda: lane_mod.started_by(dict(GH, KIT_LANE_OWNER="thread X"))["by"] == "thread X")
+test("by: otherwise terminal", lambda: lane_mod.started_by({})["by"] == "terminal")
 test("lane.py records the light slot", lane_light_slot)
 test("lane.py still runs when status can't be written", lane_meta_error_is_harmless)
 test("lane.py keeps the exit code and cleans up", lane_keeps_exit_code)

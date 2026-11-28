@@ -17,6 +17,7 @@ import atexit
 import fcntl
 import json
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -61,6 +62,28 @@ def light_slots():
 
 
 META = {"pid": os.getpid(), "queued_at": time.time(), "started_at": None, "slot": None}
+
+
+def started_by(env):
+    """Who started this run, for the QA dashboard: KIT_LANE_OWNER if set, a GitHub Actions job (repo, PR or
+    branch, workflow / job, run link), a Claude Code session (short id), or a terminal."""
+    owner = env.get("KIT_LANE_OWNER")
+    if owner:
+        return {"by": owner, "by_url": None}
+    if env.get("GITHUB_ACTIONS") == "true":
+        repo = env.get("GITHUB_REPOSITORY", "")
+        ref = env.get("GITHUB_REF", "")
+        pr = re.match(r"refs/pull/(\d+)/", ref)
+        where = "PR #" + pr.group(1) if pr else (env.get("GITHUB_REF_NAME") or ref or "?")
+        url = None
+        if repo and env.get("GITHUB_RUN_ID"):
+            url = "%s/%s/actions/runs/%s" % (env.get("GITHUB_SERVER_URL", "https://github.com"), repo, env["GITHUB_RUN_ID"])
+        return {"by": "GitHub %s %s · %s / %s" % (repo.split("/")[-1], where, env.get("GITHUB_WORKFLOW", "?"),
+                                                  env.get("GITHUB_JOB", "?")), "by_url": url}
+    if env.get("CLAUDECODE"):
+        sid = (env.get("CLAUDE_CODE_SESSION_ID") or "")[:8]
+        return {"by": "Claude session" + (" " + sid if sid else ""), "by_url": None}
+    return {"by": "terminal", "by_url": None}
 
 
 def write_meta(**fields):
@@ -181,7 +204,7 @@ def main(argv):
     have = held_rank()
     try:
         if have < rank:
-            META.update(lane=kind, command=" ".join(cmd), cwd=os.getcwd())
+            META.update(lane=kind, command=" ".join(cmd), cwd=os.getcwd(), **started_by(os.environ))
             held = acquire_heavy() if kind == "heavy" else acquire_light()
             globals()["_LANE_FILES"] = held
             os.environ["KIT_LANE_RANK"] = str(rank)

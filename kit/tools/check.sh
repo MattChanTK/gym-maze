@@ -17,6 +17,7 @@ run() {
     local label="$1"; shift
     bash -c "$*" 2>&1 | sed "s/^/$label/" || failed+=("${label%%:*}: $*")
 }
+run "Kit:    " "${clean_env[@]}" python3 -I $KIT_DIR/tools/test_kit_env.py
 run "Kit:    " "${clean_env[@]}" python3 -I $KIT_DIR/tools/test_scan_secrets.py
 run "Kit:    " "${clean_env[@]}" python3 -I $KIT_DIR/tools/test_scrub_report.py
 run "Kit:    " "${clean_env[@]}" python3 -I $KIT_DIR/tools/test_roll_changelog.py
