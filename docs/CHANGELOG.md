@@ -2,6 +2,10 @@
 
 Newest first. Each entry: date, what was built, decisions, lessons, commit hashes. Older entries: `docs/changelog/`.
 
+## 2026-11-28 CI on self-hosted Mac
+- `tests.yml` from kit v0.4.0 template (Matthew asked): runs on self-hosted Mac (label `mac`), waits while it sleeps; PR label `ci-on-github` runs on ubuntu-latest. No `git config --global` (GIT_AUTHOR_*/GIT_COMMITTER_* env). Deps in a venv under RUNNER_TEMP so the Mac's Python stays clean. Python is the runner's python3 (was setup-python 3.13).
+- Needs a runner for this repo on the Mac: `kit/tools/mac_runner.sh register MattChanTK/gym-maze mac`.
+
 ## 2026-11-28 kit v0.4.2
 - kit/ updated v0.3.2 -> v0.4.2 (daily bot): kit_env.py (Python tools load kit.env themselves), mac_runner.sh, lane owner + multi-repo QA dashboard. check.sh pass (13 tests).
 - Not taken: v0.4.0 self-hosted Mac `tests.yml`. gym-maze keeps ubuntu-latest CI; `.github/` edits need Matthew.

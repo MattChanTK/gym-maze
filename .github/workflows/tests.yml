@@ -1,22 +1,31 @@
-# Fast checks on every PR and push to main: kit/tools/check.sh (kit tests + KIT_CHECKS in kit.env).
+# Fast checks on every PR and push to master: kit/tools/check.sh (kit tests + KIT_CHECKS in kit.env).
 # Make `tests` a required check on master.
+# Runs on the self-hosted Mac (label "mac" = KIT_RUNNER_LABEL); jobs wait while it sleeps.
+# A PR with the `ci-on-github` label runs on ubuntu-latest.
+# No `git config --global`: on your Mac that would change your own git identity.
+# Deps go in a throwaway venv so the Mac's own Python stays clean.
 name: tests
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]   # labeled: adding ci-on-github re-runs
   push:
     branches: [master]
 jobs:
   tests:
-    runs-on: ubuntu-latest
+    runs-on: ${{ !contains(github.event.pull_request.labels.*.name, 'ci-on-github') && fromJSON('["self-hosted","macOS","mac"]') || 'ubuntu-latest' }}
     timeout-minutes: 10
+    env:
+      GIT_AUTHOR_NAME: ci
+      GIT_AUTHOR_EMAIL: ci@example.com
+      GIT_COMMITTER_NAME: ci
+      GIT_COMMITTER_EMAIL: ci@example.com
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-      - run: pip install 'gymnasium>=1.0' pygame numpy
-      - run: git config --global user.email ci@example.com && git config --global user.name ci
+      - run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install -q 'gymnasium>=1.0' pygame numpy
+          echo "$RUNNER_TEMP/venv/bin" >> "$GITHUB_PATH"
       - run: python3 kit/tools/scan_secrets.py --all
       - run: touch CLAUDE.local.md && kit/tools/check.sh
