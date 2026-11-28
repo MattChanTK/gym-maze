@@ -2,6 +2,9 @@
 
 Newest first. Each entry: date, what was built, decisions, lessons, commit hashes. Older entries: `docs/changelog/`.
 
+## 2026-11-28 Bot: no new issues, no self-hosted CI
+- docs/AUTOMATION.md: bot never opens issues; logs on #30 only (no pinning). Self-hosted Mac CI rejected (public repo; fork PRs could run code on the Mac); #31 closed.
+
 ## 2026-11-28 kit v0.4.2
 - kit/ updated v0.3.2 -> v0.4.2 (daily bot): kit_env.py (Python tools load kit.env themselves), mac_runner.sh, lane owner + multi-repo QA dashboard. check.sh pass (13 tests).
 - Not taken: v0.4.0 self-hosted Mac `tests.yml`. gym-maze keeps ubuntu-latest CI; `.github/` edits need Matthew.
